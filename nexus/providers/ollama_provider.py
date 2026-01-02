@@ -104,9 +104,7 @@ class OllamaProvider(BaseProvider):
                 "completion_tokens": getattr(response.usage, "completion_tokens", 0)
                 if response.usage
                 else 0,
-                "total_tokens": getattr(response.usage, "total_tokens", 0)
-                if response.usage
-                else 0,
+                "total_tokens": getattr(response.usage, "total_tokens", 0) if response.usage else 0,
             },
             finish_reason=response.choices[0].finish_reason or "stop",
         )

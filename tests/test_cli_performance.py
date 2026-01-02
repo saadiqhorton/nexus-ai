@@ -57,9 +57,7 @@ def test_cli_performance():
                 print(f"   Run {i + 1}/3...", end=" ")
 
                 start_time = time.time()
-                result = subprocess.run(
-                    test["cmd"], capture_output=True, text=True, timeout=30
-                )
+                result = subprocess.run(test["cmd"], capture_output=True, text=True, timeout=30)
                 end_time = time.time()
 
                 duration = end_time - start_time
@@ -104,9 +102,7 @@ def test_model_listing_performance():
 
         try:
             start_time = time.time()
-            result = subprocess.run(
-                test["cmd"], capture_output=True, text=True, timeout=30
-            )
+            result = subprocess.run(test["cmd"], capture_output=True, text=True, timeout=30)
             end_time = time.time()
 
             duration = end_time - start_time
@@ -115,9 +111,7 @@ def test_model_listing_performance():
                 print(f"   Duration: {duration:.3f}s ✅")
                 print(f"   Output preview: {result.stdout[:100]}...")
             else:
-                print(
-                    f"   Duration: {duration:.3f}s ❌ (exit code: {result.returncode})"
-                )
+                print(f"   Duration: {duration:.3f}s ❌ (exit code: {result.returncode})")
                 print(f"   Error: {result.stderr[:100]}...")
 
         except subprocess.TimeoutExpired:

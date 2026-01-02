@@ -48,12 +48,8 @@ def completion_command(shell: str, output: str, remove: bool):
 
             if new_content != content:
                 rc_file.write_text(new_content)
-                console.print(
-                    f"[green]✓[/green] Removed Nexus completions from {rc_file}"
-                )
-                console.print(
-                    "[dim]Restart your shell for changes to take effect.[/dim]"
-                )
+                console.print(f"[green]✓[/green] Removed Nexus completions from {rc_file}")
+                console.print("[dim]Restart your shell for changes to take effect.[/dim]")
             else:
                 console.print(f"[yellow]Could not remove block from {rc_file}[/yellow]")
         else:

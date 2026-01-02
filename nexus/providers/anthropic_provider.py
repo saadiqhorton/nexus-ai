@@ -19,9 +19,7 @@ class AnthropicProvider(BaseProvider):
         api_key = os.getenv(config.get("api_key_env", "ANTHROPIC_API_KEY"))
         base_url = config.get("base_url")
 
-        self.client = (
-            AsyncAnthropic(api_key=api_key, base_url=base_url) if api_key else None
-        )
+        self.client = AsyncAnthropic(api_key=api_key, base_url=base_url) if api_key else None
 
         # Claude model catalog (from Anthropic Models API)
         self.known_models = [
@@ -144,8 +142,7 @@ class AnthropicProvider(BaseProvider):
             usage={
                 "prompt_tokens": response.usage.input_tokens,
                 "completion_tokens": response.usage.output_tokens,
-                "total_tokens": response.usage.input_tokens
-                + response.usage.output_tokens,
+                "total_tokens": response.usage.input_tokens + response.usage.output_tokens,
             },
             finish_reason=response.stop_reason or "unknown",
         )

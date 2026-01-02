@@ -175,9 +175,7 @@ class TestOpenAIProviderListModels:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {}, clear=True)
     @patch("nexus.providers.openai_provider.AsyncOpenAI")
-    async def test_list_models_returns_empty_without_client(
-        self, mock_openai, openai_config
-    ):
+    async def test_list_models_returns_empty_without_client(self, mock_openai, openai_config):
         """Test list_models returns empty list when client is None."""
         provider = OpenAIProvider(openai_config)
         models = await provider.list_models()
@@ -364,9 +362,7 @@ class TestOpenAIProviderCompleteStream:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {"OPENAI_API_KEY": "test-api-key"})
     @patch("nexus.providers.openai_provider.AsyncOpenAI")
-    async def test_complete_stream_handles_empty_delta(
-        self, mock_openai, openai_config
-    ):
+    async def test_complete_stream_handles_empty_delta(self, mock_openai, openai_config):
         """Test complete_stream handles chunks with no content."""
 
         async def mock_stream():
@@ -413,9 +409,7 @@ class TestOpenAIProviderCompleteStream:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {}, clear=True)
     @patch("nexus.providers.openai_provider.AsyncOpenAI")
-    async def test_complete_stream_raises_without_client(
-        self, mock_openai, openai_config
-    ):
+    async def test_complete_stream_raises_without_client(self, mock_openai, openai_config):
         """Test complete_stream raises error when client is None."""
         provider = OpenAIProvider(openai_config)
         request = CompletionRequest(prompt="Test", model="gpt-4", stream=True)

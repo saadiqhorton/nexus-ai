@@ -197,12 +197,8 @@ class TestDefaultWithModels:
 
         models_data = {
             "openai": [
-                ModelInfo(
-                    id="gpt-4", name="GPT-4", provider="openai", context_window=8192
-                ),
-                ModelInfo(
-                    id="gpt-4o", name="GPT-4o", provider="openai", context_window=128000
-                ),
+                ModelInfo(id="gpt-4", name="GPT-4", provider="openai", context_window=8192),
+                ModelInfo(id="gpt-4o", name="GPT-4o", provider="openai", context_window=128000),
             ],
             "anthropic": [
                 ModelInfo(

@@ -18,9 +18,7 @@ class OpenRouterProvider(BaseProvider):
         api_key = os.getenv(config.get("api_key_env", "OPENROUTER_API_KEY"))
         base_url = config.get("base_url", "https://openrouter.ai/api/v1")
 
-        self.client = (
-            AsyncOpenAI(base_url=base_url, api_key=api_key) if api_key else None
-        )
+        self.client = AsyncOpenAI(base_url=base_url, api_key=api_key) if api_key else None
 
     def validate_config(self) -> bool:
         """Check if OpenRouter API key is set"""
@@ -83,9 +81,7 @@ class OpenRouterProvider(BaseProvider):
             provider="openrouter",
             usage={
                 "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
-                "completion_tokens": response.usage.completion_tokens
-                if response.usage
-                else 0,
+                "completion_tokens": response.usage.completion_tokens if response.usage else 0,
                 "total_tokens": response.usage.total_tokens if response.usage else 0,
             },
             finish_reason=response.choices[0].finish_reason or "stop",

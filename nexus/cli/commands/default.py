@@ -65,9 +65,7 @@ def _resolve_model_selection(
         return None, None, matches, "ambiguous"
 
     default_provider = cfg.get_default_provider()
-    warning = (
-        f"Using default provider '{default_provider}' without model availability check."
-    )
+    warning = f"Using default provider '{default_provider}' without model availability check."
     return default_provider, model_id, warning, None
 
 
@@ -103,9 +101,7 @@ def display_fuzzy_page(
         f"Showing {result_start}-{result_end} of {total_results} results"
     )
 
-    console.print(
-        "[dim](n = next page, p = prev page, Enter = cancel, or select number)[/dim]"
-    )
+    console.print("[dim](n = next page, p = prev page, Enter = cancel, or select number)[/dim]")
 
 
 @click.command(name="default")
@@ -158,16 +154,12 @@ def default_command(ctx, model_id, filter_provider, fuzzy):
             cfg.config.defaults.provider = selected_provider
             cfg.config.defaults.model = selected_model
             cfg.save()
-            console.print(
-                f"[green]✓[/green] Default: {selected_provider}/{selected_model}"
-            )
+            console.print(f"[green]✓[/green] Default: {selected_provider}/{selected_model}")
             if note:
                 console.print(f"[yellow]{note}[/yellow]")
             return
         elif selected_provider and not selected_model:
-            console.print(
-                f"[yellow]Model '{model_id}' found in multiple providers[/yellow]"
-            )
+            console.print(f"[yellow]Model '{model_id}' found in multiple providers[/yellow]")
             console.print("[yellow]Specify as provider/model[/yellow]")
             return
 
@@ -214,27 +206,17 @@ def default_command(ctx, model_id, filter_provider, fuzzy):
             return
 
         except Exception as e:
-            logger.warning(
-                f"Interactive mode failed, falling back to text-based pagination: {e}"
-            )
+            logger.warning(f"Interactive mode failed, falling back to text-based pagination: {e}")
 
-            total_pages = (
-                len(scored) + FUZZY_SEARCH_PAGE_SIZE - 1
-            ) // FUZZY_SEARCH_PAGE_SIZE
+            total_pages = (len(scored) + FUZZY_SEARCH_PAGE_SIZE - 1) // FUZZY_SEARCH_PAGE_SIZE
             current_page = 0
 
             while True:
-                display_fuzzy_page(
-                    console, scored, model_id, current_page, FUZZY_SEARCH_PAGE_SIZE
-                )
+                display_fuzzy_page(console, scored, model_id, current_page, FUZZY_SEARCH_PAGE_SIZE)
 
                 console.print()
                 try:
-                    selection = (
-                        input("Select number (or n/next/p/prev/Enter): ")
-                        .strip()
-                        .lower()
-                    )
+                    selection = input("Select number (or n/next/p/prev/Enter): ").strip().lower()
                 except (KeyboardInterrupt, EOFError):
                     console.print("\n[dim]Cancelled[/dim]")
                     return
@@ -281,8 +263,7 @@ def default_command(ctx, model_id, filter_provider, fuzzy):
         console.print(f"[cyan][{prov_name.upper()}][/cyan]")
         for model in sorted(all_models[prov_name], key=lambda m: m.id):
             current = (
-                prov_name == cfg.config.defaults.provider
-                and model.id == cfg.config.defaults.model
+                prov_name == cfg.config.defaults.provider and model.id == cfg.config.defaults.model
             )
             marker = "*" if current else " "
             suffix = " [dim](current)[/dim]" if current else ""
@@ -320,7 +301,5 @@ def default_command(ctx, model_id, filter_provider, fuzzy):
         cfg.save()
         console.print(f"[green]✓[/green] Default: {selected_provider}/{selected_model}")
     else:
-        console.print(
-            f"[yellow]Model '{selection}' found in multiple providers[/yellow]"
-        )
+        console.print(f"[yellow]Model '{selection}' found in multiple providers[/yellow]")
         console.print("[yellow]Specify as provider/model[/yellow]")

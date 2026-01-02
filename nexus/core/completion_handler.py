@@ -57,9 +57,7 @@ class CompletionHandler:
             logger.error(error_msg)
             return
 
-        logger.debug(
-            f"Completion request: provider={provider}, model={model}, stream={stream}"
-        )
+        logger.debug(f"Completion request: provider={provider}, model={model}, stream={stream}")
 
         # Get provider instance
         provider_instance = self.provider_manager.get_provider(provider)
@@ -186,9 +184,7 @@ class CompletionHandler:
                     "total": response.usage.get("total_tokens", 0),
                 }
 
-            logger.info(
-                f"Completion finished in {duration_ms}ms. Usage: {response.usage}"
-            )
+            logger.info(f"Completion finished in {duration_ms}ms. Usage: {response.usage}")
 
             return response.content, tokens, duration_ms
 

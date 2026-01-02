@@ -101,9 +101,7 @@ class TestShowHistory:
 
         session = Session(name="test", model="gpt-4", provider="openai")
         for i in range(20):
-            session.turns.append(
-                Turn(role="user", content=f"Message {i}", model="gpt-4")
-            )
+            session.turns.append(Turn(role="user", content=f"Message {i}", model="gpt-4"))
 
         # Should not raise, and should only show last 5
         show_history(session, 5)
@@ -177,9 +175,7 @@ class TestHandleREPLCommand:
         from nexus.cli.repl import handle_repl_command
 
         result = asyncio.run(
-            handle_repl_command(
-                "/history 5", test_session, mock_session_manager, "gpt-4"
-            )
+            handle_repl_command("/history 5", test_session, mock_session_manager, "gpt-4")
         )
         assert result is True
 
@@ -197,9 +193,7 @@ class TestHandleREPLCommand:
         from nexus.cli.repl import handle_repl_command
 
         result = asyncio.run(
-            handle_repl_command(
-                "/model claude-3", test_session, mock_session_manager, "gpt-4"
-            )
+            handle_repl_command("/model claude-3", test_session, mock_session_manager, "gpt-4")
         )
         assert result is True
         assert test_session.model == "claude-3"
@@ -219,9 +213,7 @@ class TestHandleREPLCommand:
 
         test_session.name = ".temp-123"
         result = asyncio.run(
-            handle_repl_command(
-                "/save mysession", test_session, mock_session_manager, "gpt-4"
-            )
+            handle_repl_command("/save mysession", test_session, mock_session_manager, "gpt-4")
         )
         assert result is True
         assert test_session.name == "mysession"
@@ -251,9 +243,7 @@ class TestHandleREPLCommand:
         from nexus.cli.repl import handle_repl_command
 
         result = asyncio.run(
-            handle_repl_command(
-                "/export json", test_session, mock_session_manager, "gpt-4"
-            )
+            handle_repl_command("/export json", test_session, mock_session_manager, "gpt-4")
         )
         assert result is True
 

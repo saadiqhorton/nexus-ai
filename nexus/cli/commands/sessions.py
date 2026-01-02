@@ -202,6 +202,4 @@ def sessions_rename(old_name: str, new_name: str):
     if sm.rename_session(old_name, new_name):
         console.print(f"[green]✓[/green] Renamed '{old_name}' to '{new_name}'")
     else:
-        console.print(
-            f"[red]Failed: '{old_name}' not found or '{new_name}' already exists[/red]"
-        )
+        console.print(f"[red]Failed: '{old_name}' not found or '{new_name}' already exists[/red]")

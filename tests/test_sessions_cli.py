@@ -148,11 +148,7 @@ class TestSessionsCLI:
         """Test showing a session that doesn't exist."""
         result = runner.invoke(cli, ["sessions", "show", "nonexistent"])
         output_lower = result.output.lower()
-        assert (
-            "not found" in output_lower
-            or "error" in output_lower
-            or result.exit_code != 0
-        )
+        assert "not found" in output_lower or "error" in output_lower or result.exit_code != 0
 
     def test_sessions_show_existing(self, runner, setup_sessions):
         """Test showing an existing session."""
@@ -181,9 +177,7 @@ class TestSessionsCLI:
         assert result.exit_code == 0
         output_lower = result.output.lower()
         assert (
-            "no match" in output_lower
-            or "not found" in output_lower
-            or result.output.strip() == ""
+            "no match" in output_lower or "not found" in output_lower or result.output.strip() == ""
         )
 
     def test_sessions_search_with_results(self, runner, setup_sessions):
@@ -201,9 +195,7 @@ class TestSessionsCLI:
     def test_sessions_export_markdown(self, runner, setup_sessions):
         """Test exporting a session as Markdown."""
         _create_session_file(setup_sessions, "export-test")
-        runner.invoke(
-            cli, ["sessions", "export", "export-test", "--format", "markdown"]
-        )
+        runner.invoke(cli, ["sessions", "export", "export-test", "--format", "markdown"])
 
     def test_sessions_rename(self, runner, setup_sessions):
         """Test renaming a session."""

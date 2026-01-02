@@ -48,9 +48,7 @@ class TestCreateSession:
 
     def test_create_session_sanitizes_name(self, session_manager):
         """Test that session names are sanitized."""
-        session = session_manager.create_session(
-            "test/name:with*chars", "gpt-4", "openai"
-        )
+        session = session_manager.create_session("test/name:with*chars", "gpt-4", "openai")
         # Invalid characters should be replaced with underscores
         assert "/" not in session.name
         assert ":" not in session.name
@@ -106,9 +104,7 @@ class TestGetOrCreateSession:
     def test_get_or_create_existing(self, session_manager):
         """Test loading an existing session via get_or_create."""
         session_manager.create_session("existing", "gpt-4", "openai")
-        session = session_manager.get_or_create_session(
-            "existing", "claude", "anthropic"
-        )
+        session = session_manager.get_or_create_session("existing", "claude", "anthropic")
         # Should load existing, not create with new model
         assert session.model == "gpt-4"
         assert session.provider == "openai"
@@ -136,9 +132,7 @@ class TestAddTurn:
         """Test adding multiple turns."""
         session = session_manager.create_session("test", "gpt-4", "openai")
         turn1 = Turn(role="user", content="Hello", model="gpt-4", tokens={"total": 5})
-        turn2 = Turn(
-            role="assistant", content="Hi!", model="gpt-4", tokens={"total": 3}
-        )
+        turn2 = Turn(role="assistant", content="Hi!", model="gpt-4", tokens={"total": 3})
         session_manager.add_turn(session, turn1)
         session_manager.add_turn(session, turn2)
         assert len(session.turns) == 2

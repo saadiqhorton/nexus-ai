@@ -12,9 +12,7 @@ def setup_logging(level: int = logging.INFO, log_file: Optional[str] = None):
 
     # Prevent adding handlers if they already exist
     if not logger.handlers:
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
         # Console handler
         console_handler = logging.StreamHandler(sys.stderr)

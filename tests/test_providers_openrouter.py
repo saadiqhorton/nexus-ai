@@ -52,9 +52,7 @@ class TestOpenRouterProviderInit:
 
     @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-api-key"})
     @patch("nexus.providers.openrouter_provider.AsyncOpenAI")
-    def test_init_with_custom_base_url(
-        self, mock_openai, openrouter_config_with_custom_url
-    ):
+    def test_init_with_custom_base_url(self, mock_openai, openrouter_config_with_custom_url):
         """Test provider initializes with custom base URL."""
         provider = OpenRouterProvider(openrouter_config_with_custom_url)
 
@@ -88,9 +86,7 @@ class TestOpenRouterProviderListModels:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-api-key"})
     @patch("nexus.providers.openrouter_provider.AsyncOpenAI")
-    async def test_list_models_returns_openrouter_models(
-        self, mock_openai, openrouter_config
-    ):
+    async def test_list_models_returns_openrouter_models(self, mock_openai, openrouter_config):
         """Test list_models returns OpenRouter models."""
         # Setup mock response
         mock_model_1 = Mock()
@@ -161,9 +157,7 @@ class TestOpenRouterProviderListModels:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {}, clear=True)
     @patch("nexus.providers.openrouter_provider.AsyncOpenAI")
-    async def test_list_models_returns_empty_without_client(
-        self, mock_openai, openrouter_config
-    ):
+    async def test_list_models_returns_empty_without_client(self, mock_openai, openrouter_config):
         """Test list_models returns empty list when client is None."""
         provider = OpenRouterProvider(openrouter_config)
         models = await provider.list_models()
@@ -288,9 +282,7 @@ class TestOpenRouterProviderComplete:
             {"role": "system", "content": "System"},
             {"role": "user", "content": "User message"},
         ]
-        request = CompletionRequest(
-            prompt="Ignored", model="google/gemini-pro", messages=messages
-        )
+        request = CompletionRequest(prompt="Ignored", model="google/gemini-pro", messages=messages)
         await provider.complete(request)
 
         # Verify provided messages were used
@@ -343,9 +335,7 @@ class TestOpenRouterProviderCompleteStream:
         mock_openai.return_value = mock_client
 
         provider = OpenRouterProvider(openrouter_config)
-        request = CompletionRequest(
-            prompt="Test prompt", model="openai/gpt-4", stream=True
-        )
+        request = CompletionRequest(prompt="Test prompt", model="openai/gpt-4", stream=True)
 
         chunks = []
         async for chunk in provider.complete_stream(request):
@@ -356,9 +346,7 @@ class TestOpenRouterProviderCompleteStream:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-api-key"})
     @patch("nexus.providers.openrouter_provider.AsyncOpenAI")
-    async def test_complete_stream_with_custom_headers(
-        self, mock_openai, openrouter_config
-    ):
+    async def test_complete_stream_with_custom_headers(self, mock_openai, openrouter_config):
         """Test complete_stream with custom OpenRouter headers."""
 
         async def mock_stream():
@@ -375,9 +363,7 @@ class TestOpenRouterProviderCompleteStream:
         mock_openai.return_value = mock_client
 
         provider = OpenRouterProvider(openrouter_config)
-        request = CompletionRequest(
-            prompt="Test", model="anthropic/claude-3-sonnet", stream=True
-        )
+        request = CompletionRequest(prompt="Test", model="anthropic/claude-3-sonnet", stream=True)
 
         chunks = []
         async for chunk in provider.complete_stream(request):
@@ -388,9 +374,7 @@ class TestOpenRouterProviderCompleteStream:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {}, clear=True)
     @patch("nexus.providers.openrouter_provider.AsyncOpenAI")
-    async def test_complete_stream_raises_without_client(
-        self, mock_openai, openrouter_config
-    ):
+    async def test_complete_stream_raises_without_client(self, mock_openai, openrouter_config):
         """Test complete_stream raises error when client is None."""
         provider = OpenRouterProvider(openrouter_config)
         request = CompletionRequest(prompt="Test", model="openai/gpt-4", stream=True)
@@ -406,19 +390,12 @@ class TestOpenRouterProviderContextWindow:
     def test_get_context_window_gpt4(self):
         """Test context window for GPT-4."""
         assert OpenRouterProvider._get_context_window("openai/gpt-4") == 8192
-        assert (
-            OpenRouterProvider._get_context_window("anthropic/claude-3-opus") == 200000
-        )
+        assert OpenRouterProvider._get_context_window("anthropic/claude-3-opus") == 200000
 
     def test_get_context_window_claude(self):
         """Test context window for Claude models."""
-        assert (
-            OpenRouterProvider._get_context_window("anthropic/claude-3-sonnet")
-            == 200000
-        )
-        assert (
-            OpenRouterProvider._get_context_window("anthropic/claude-3-haiku") == 200000
-        )
+        assert OpenRouterProvider._get_context_window("anthropic/claude-3-sonnet") == 200000
+        assert OpenRouterProvider._get_context_window("anthropic/claude-3-haiku") == 200000
 
     def test_get_context_window_gemini(self):
         """Test context window for Gemini models."""
@@ -432,9 +409,7 @@ class TestOpenRouterProviderContextWindow:
 
     def test_get_context_window_mistral(self):
         """Test context window for Mistral models."""
-        assert (
-            OpenRouterProvider._get_context_window("mistralai/mistral-large") == 32768
-        )
+        assert OpenRouterProvider._get_context_window("mistralai/mistral-large") == 32768
         assert OpenRouterProvider._get_context_window("mistralai/mixtral-8x7b") == 32768
 
     def test_get_context_window_unknown_model(self):

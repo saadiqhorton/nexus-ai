@@ -14,13 +14,9 @@ class NexusApp:
     """
 
     def __init__(self, config_path: Optional[str] = None):
-        self.config_manager = (
-            ConfigManager(config_path) if config_path else ConfigManager()
-        )
+        self.config_manager = ConfigManager(config_path) if config_path else ConfigManager()
         self.provider_manager = ProviderManager(self.config_manager)
-        self.completion_handler = CompletionHandler(
-            self.provider_manager, self.config_manager
-        )
+        self.completion_handler = CompletionHandler(self.provider_manager, self.config_manager)
         logger.debug("NexusApp initialized")
 
     @classmethod

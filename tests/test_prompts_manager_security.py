@@ -19,9 +19,7 @@ class TestPromptSanitization:
         """Test that empty string is rejected."""
         manager = PromptManager(Path("/tmp/prompts"))
 
-        with pytest.raises(
-            PromptSecurityError, match="Prompt name must be a non-empty string"
-        ):
+        with pytest.raises(PromptSecurityError, match="Prompt name must be a non-empty string"):
             manager._sanitize_name("")
 
     def test_sanitize_name_rejects_whitespace_only(self):
@@ -127,9 +125,7 @@ class TestPathTraversalPrevention:
 
         for vector in attack_vectors:
             result = manager._sanitize_name(vector)
-            assert ".." not in result, (
-                f"Path traversal not blocked: '{vector}' -> '{result}'"
-            )
+            assert ".." not in result, f"Path traversal not blocked: '{vector}' -> '{result}'"
             assert "/" not in result
             assert "\\" not in result
             assert result
@@ -181,9 +177,7 @@ class TestPathTraversalPrevention:
 
         for vector in attack_vectors:
             result = manager._sanitize_name(vector)
-            assert ":" not in result, (
-                f"Windows absolute path not blocked: '{vector}' -> '{result}'"
-            )
+            assert ":" not in result, f"Windows absolute path not blocked: '{vector}' -> '{result}'"
 
     def test_sanitize_name_blocks_mixed_separators(self):
         """Test mixed path separators."""
@@ -198,9 +192,7 @@ class TestPathTraversalPrevention:
 
         for vector in attack_vectors:
             result = manager._sanitize_name(vector)
-            assert ".." not in result, (
-                f"Mixed separators not blocked: '{vector}' -> '{result}'"
-            )
+            assert ".." not in result, f"Mixed separators not blocked: '{vector}' -> '{result}'"
 
     def test_sanitize_name_blocks_hidden_traversal(self):
         """Test traversal attempts hidden in normal names."""
@@ -214,9 +206,7 @@ class TestPathTraversalPrevention:
 
         for vector in attack_vectors:
             result = manager._sanitize_name(vector)
-            assert ".." not in result, (
-                f"Hidden traversal not blocked: '{vector}' -> '{result}'"
-            )
+            assert ".." not in result, f"Hidden traversal not blocked: '{vector}' -> '{result}'"
 
     def test_sanitize_name_blocks_null_byte_injection(self):
         """Test null byte injection prevention."""
@@ -230,9 +220,7 @@ class TestPathTraversalPrevention:
 
         for vector in attack_vectors:
             result = manager._sanitize_name(vector)
-            assert "\x00" not in result, (
-                f"Null byte not removed: '{vector}' -> '{result}'"
-            )
+            assert "\x00" not in result, f"Null byte not removed: '{vector}' -> '{result}'"
 
     def test_sanitize_name_blocks_unicode_separators(self):
         """Test Unicode path separators."""

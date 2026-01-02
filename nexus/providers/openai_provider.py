@@ -18,9 +18,7 @@ class OpenAIProvider(BaseProvider):
         api_key = os.getenv(config.get("api_key_env", "OPENAI_API_KEY"))
         base_url = config.get("base_url")
 
-        self.client = (
-            AsyncOpenAI(api_key=api_key, base_url=base_url) if api_key else None
-        )
+        self.client = AsyncOpenAI(api_key=api_key, base_url=base_url) if api_key else None
 
     def validate_config(self) -> bool:
         """Check if OpenAI API key is set"""
@@ -87,9 +85,7 @@ class OpenAIProvider(BaseProvider):
             provider="openai",
             usage={
                 "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
-                "completion_tokens": response.usage.completion_tokens
-                if response.usage
-                else 0,
+                "completion_tokens": response.usage.completion_tokens if response.usage else 0,
                 "total_tokens": response.usage.total_tokens if response.usage else 0,
             },
             finish_reason=response.choices[0].finish_reason,

@@ -70,9 +70,7 @@ class ProviderManager:
                 enabled.append(name)
         return enabled
 
-    async def list_all_models(
-        self, use_cache: bool = True
-    ) -> Dict[str, List[ModelInfo]]:
+    async def list_all_models(self, use_cache: bool = True) -> Dict[str, List[ModelInfo]]:
         """Get models from all providers"""
         if use_cache:
             cached_models = self.cache.get("all_models", expiry_seconds=3600)
@@ -100,16 +98,13 @@ class ProviderManager:
         if all_models:
             # Cache the models (converting ModelInfo to dict for JSON serialization)
             cache_data = {
-                p_name: [m.model_dump() for m in models]
-                for p_name, models in all_models.items()
+                p_name: [m.model_dump() for m in models] for p_name, models in all_models.items()
             }
             self.cache.set("all_models", cache_data)
 
         return all_models
 
-    async def list_all_models_fast(
-        self, use_cache: bool = True
-    ) -> Dict[str, List[ModelInfo]]:
+    async def list_all_models_fast(self, use_cache: bool = True) -> Dict[str, List[ModelInfo]]:
         """Fast version that only lists models for enabled providers, skipping slow ones when possible"""
         if use_cache:
             cached_models = self.cache.get("all_models", expiry_seconds=3600)
@@ -146,8 +141,7 @@ class ProviderManager:
         if all_models:
             # Cache the models (converting ModelInfo to dict for JSON serialization)
             cache_data = {
-                p_name: [m.model_dump() for m in models]
-                for p_name, models in all_models.items()
+                p_name: [m.model_dump() for m in models] for p_name, models in all_models.items()
             }
             self.cache.set("all_models", cache_data)
 

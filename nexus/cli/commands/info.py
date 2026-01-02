@@ -62,9 +62,7 @@ def providers():
 
         default_model = cfg.get_default_model(provider_name) if is_available else "N/A"
 
-        table.add_row(
-            provider_name, f"[{status_color}]{status}[/{status_color}]", default_model
-        )
+        table.add_row(provider_name, f"[{status_color}]{status}[/{status_color}]", default_model)
 
     console.print(table)
 

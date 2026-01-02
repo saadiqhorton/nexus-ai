@@ -309,9 +309,7 @@ class TestInteractiveFuzzySelectorGlobalIndexCalculation:
         selector._current_page = 0
         selector._highlighted_index = 0
 
-        global_idx = (
-            selector._current_page * selector.page_size + selector._highlighted_index
-        )
+        global_idx = selector._current_page * selector.page_size + selector._highlighted_index
         assert global_idx == 0
 
     def test_global_index_first_page_last_item(self):
@@ -320,9 +318,7 @@ class TestInteractiveFuzzySelectorGlobalIndexCalculation:
         selector._current_page = 0
         selector._highlighted_index = 4
 
-        global_idx = (
-            selector._current_page * selector.page_size + selector._highlighted_index
-        )
+        global_idx = selector._current_page * selector.page_size + selector._highlighted_index
         assert global_idx == 4
 
     def test_global_index_second_page_first_item(self):
@@ -331,9 +327,7 @@ class TestInteractiveFuzzySelectorGlobalIndexCalculation:
         selector._current_page = 1
         selector._highlighted_index = 0
 
-        global_idx = (
-            selector._current_page * selector.page_size + selector._highlighted_index
-        )
+        global_idx = selector._current_page * selector.page_size + selector._highlighted_index
         assert global_idx == 5
 
     def test_global_index_second_page_middle_item(self):
@@ -342,9 +336,7 @@ class TestInteractiveFuzzySelectorGlobalIndexCalculation:
         selector._current_page = 1
         selector._highlighted_index = 3
 
-        global_idx = (
-            selector._current_page * selector.page_size + selector._highlighted_index
-        )
+        global_idx = selector._current_page * selector.page_size + selector._highlighted_index
         assert global_idx == 8
 
 

@@ -53,6 +53,4 @@ class CacheManager:
         except OSError as e:
             logger.warning(f"Cache write failed for {key}: {e}")
         except (TypeError, ValueError) as e:
-            logger.warning(
-                f"Cache write failed for {key}: Value not JSON serializable - {e}"
-            )
+            logger.warning(f"Cache write failed for {key}: Value not JSON serializable - {e}")

@@ -114,9 +114,7 @@ def test_base_provider_name_extraction():
                 finish_reason="stop",
             )
 
-        async def complete_stream(
-            self, request: CompletionRequest
-        ) -> AsyncIterator[str]:
+        async def complete_stream(self, request: CompletionRequest) -> AsyncIterator[str]:
             yield "test"
 
         def validate_config(self) -> bool:
@@ -141,9 +139,7 @@ def test_base_provider_name_extraction():
                 finish_reason="stop",
             )
 
-        async def complete_stream(
-            self, request: CompletionRequest
-        ) -> AsyncIterator[str]:
+        async def complete_stream(self, request: CompletionRequest) -> AsyncIterator[str]:
             yield "test"
 
         def validate_config(self) -> bool:
@@ -172,9 +168,7 @@ def test_base_provider_is_available_with_enabled():
                 finish_reason="stop",
             )
 
-        async def complete_stream(
-            self, request: CompletionRequest
-        ) -> AsyncIterator[str]:
+        async def complete_stream(self, request: CompletionRequest) -> AsyncIterator[str]:
             yield "test"
 
         def validate_config(self) -> bool:
@@ -205,9 +199,7 @@ def test_base_provider_is_available_with_enabled():
                 finish_reason="stop",
             )
 
-        async def complete_stream(
-            self, request: CompletionRequest
-        ) -> AsyncIterator[str]:
+        async def complete_stream(self, request: CompletionRequest) -> AsyncIterator[str]:
             yield "test"
 
         def validate_config(self) -> bool:
@@ -237,9 +229,7 @@ def test_base_provider_is_available_without_client():
                 finish_reason="stop",
             )
 
-        async def complete_stream(
-            self, request: CompletionRequest
-        ) -> AsyncIterator[str]:
+        async def complete_stream(self, request: CompletionRequest) -> AsyncIterator[str]:
             yield "test"
 
         def validate_config(self) -> bool:

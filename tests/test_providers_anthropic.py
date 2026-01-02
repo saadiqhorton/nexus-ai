@@ -50,9 +50,7 @@ class TestAnthropicProviderInit:
 
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-api-key"})
     @patch("nexus.providers.anthropic_provider.AsyncAnthropic")
-    def test_init_with_custom_base_url(
-        self, mock_anthropic, anthropic_config_with_base_url
-    ):
+    def test_init_with_custom_base_url(self, mock_anthropic, anthropic_config_with_base_url):
         """Test provider initializes with custom base URL."""
         provider = AnthropicProvider(anthropic_config_with_base_url)
 
@@ -86,9 +84,7 @@ class TestAnthropicProviderListModels:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-api-key"})
     @patch("nexus.providers.anthropic_provider.AsyncAnthropic")
-    async def test_list_models_returns_known_models(
-        self, mock_anthropic, anthropic_config
-    ):
+    async def test_list_models_returns_known_models(self, mock_anthropic, anthropic_config):
         """Test list_models returns all known Claude models."""
         mock_client = AsyncMock()
         mock_anthropic.return_value = mock_client
@@ -122,16 +118,12 @@ class TestAnthropicProviderListModels:
 
         # Check that we have specific models
         model_ids = [m.id for m in models]
-        assert (
-            "claude-sonnet-4" in model_ids or "claude-sonnet-4-5-20250929" in model_ids
-        )
+        assert "claude-sonnet-4" in model_ids or "claude-sonnet-4-5-20250929" in model_ids
 
     @pytest.mark.asyncio
     @patch.dict(os.environ, {}, clear=True)
     @patch("nexus.providers.anthropic_provider.AsyncAnthropic")
-    async def test_list_models_returns_empty_without_client(
-        self, mock_anthropic, anthropic_config
-    ):
+    async def test_list_models_returns_empty_without_client(self, mock_anthropic, anthropic_config):
         """Test list_models returns empty list when client is None."""
         provider = AnthropicProvider(anthropic_config)
         models = await provider.list_models()
@@ -231,9 +223,7 @@ class TestAnthropicProviderComplete:
             {"role": "user", "content": "User message"},
             {"role": "assistant", "content": "Assistant response"},
         ]
-        request = CompletionRequest(
-            prompt="Ignored", model="claude-sonnet-4", messages=messages
-        )
+        request = CompletionRequest(prompt="Ignored", model="claude-sonnet-4", messages=messages)
         await provider.complete(request)
 
         # Verify provided messages were used (system messages filtered out)
@@ -243,9 +233,7 @@ class TestAnthropicProviderComplete:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-api-key"})
     @patch("nexus.providers.anthropic_provider.AsyncAnthropic")
-    async def test_complete_with_system_in_messages(
-        self, mock_anthropic, anthropic_config
-    ):
+    async def test_complete_with_system_in_messages(self, mock_anthropic, anthropic_config):
         """Test complete extracts system prompt from messages."""
         mock_text_block = Mock()
         mock_text_block.text = "Response with system from messages"
@@ -266,9 +254,7 @@ class TestAnthropicProviderComplete:
             {"role": "system", "content": "System instructions"},
             {"role": "user", "content": "User message"},
         ]
-        request = CompletionRequest(
-            prompt="Ignored", model="claude-sonnet-4", messages=messages
-        )
+        request = CompletionRequest(prompt="Ignored", model="claude-sonnet-4", messages=messages)
         await provider.complete(request)
 
         # Verify system prompt was extracted and user message kept
@@ -279,9 +265,7 @@ class TestAnthropicProviderComplete:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {}, clear=True)
     @patch("nexus.providers.anthropic_provider.AsyncAnthropic")
-    async def test_complete_raises_without_client(
-        self, mock_anthropic, anthropic_config
-    ):
+    async def test_complete_raises_without_client(self, mock_anthropic, anthropic_config):
         """Test complete raises error when client is None."""
         provider = AnthropicProvider(anthropic_config)
         request = CompletionRequest(prompt="Test", model="claude-sonnet-4")
@@ -296,9 +280,7 @@ class TestAnthropicProviderCompleteStream:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-api-key"})
     @patch("nexus.providers.anthropic_provider.AsyncAnthropic")
-    async def test_complete_stream_yields_chunks(
-        self, mock_anthropic, anthropic_config
-    ):
+    async def test_complete_stream_yields_chunks(self, mock_anthropic, anthropic_config):
         """Test complete_stream yields content chunks."""
 
         # Create mock chunks
@@ -324,9 +306,7 @@ class TestAnthropicProviderCompleteStream:
         mock_anthropic.return_value = mock_client
 
         provider = AnthropicProvider(anthropic_config)
-        request = CompletionRequest(
-            prompt="Test prompt", model="claude-sonnet-4", stream=True
-        )
+        request = CompletionRequest(prompt="Test prompt", model="claude-sonnet-4", stream=True)
 
         chunks = []
         async for chunk in provider.complete_stream(request):
@@ -337,9 +317,7 @@ class TestAnthropicProviderCompleteStream:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-api-key"})
     @patch("nexus.providers.anthropic_provider.AsyncAnthropic")
-    async def test_complete_stream_with_system_prompt(
-        self, mock_anthropic, anthropic_config
-    ):
+    async def test_complete_stream_with_system_prompt(self, mock_anthropic, anthropic_config):
         """Test complete_stream handles system prompt correctly."""
 
         async def mock_text_stream():
@@ -382,9 +360,7 @@ class TestAnthropicProviderCompleteStream:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {}, clear=True)
     @patch("nexus.providers.anthropic_provider.AsyncAnthropic")
-    async def test_complete_stream_raises_without_client(
-        self, mock_anthropic, anthropic_config
-    ):
+    async def test_complete_stream_raises_without_client(self, mock_anthropic, anthropic_config):
         """Test complete_stream raises error when client is None."""
         provider = AnthropicProvider(anthropic_config)
         request = CompletionRequest(prompt="Test", model="claude-sonnet-4", stream=True)
@@ -400,9 +376,7 @@ class TestAnthropicProviderKnownModels:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-api-key"})
     @patch("nexus.providers.anthropic_provider.AsyncAnthropic")
-    async def test_known_models_contains_opus_models(
-        self, mock_anthropic, anthropic_config
-    ):
+    async def test_known_models_contains_opus_models(self, mock_anthropic, anthropic_config):
         """Test known models includes Opus models."""
         provider = AnthropicProvider(anthropic_config)
         models = await provider.list_models()
@@ -416,9 +390,7 @@ class TestAnthropicProviderKnownModels:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-api-key"})
     @patch("nexus.providers.anthropic_provider.AsyncAnthropic")
-    async def test_known_models_contains_sonnet_models(
-        self, mock_anthropic, anthropic_config
-    ):
+    async def test_known_models_contains_sonnet_models(self, mock_anthropic, anthropic_config):
         """Test known models includes Sonnet models."""
         provider = AnthropicProvider(anthropic_config)
         models = await provider.list_models()
@@ -432,9 +404,7 @@ class TestAnthropicProviderKnownModels:
     @pytest.mark.asyncio
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-api-key"})
     @patch("nexus.providers.anthropic_provider.AsyncAnthropic")
-    async def test_known_models_contains_haiku_models(
-        self, mock_anthropic, anthropic_config
-    ):
+    async def test_known_models_contains_haiku_models(self, mock_anthropic, anthropic_config):
         """Test known models includes Haiku models."""
         provider = AnthropicProvider(anthropic_config)
         models = await provider.list_models()

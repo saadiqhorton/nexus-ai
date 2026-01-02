@@ -36,9 +36,7 @@ repl_completer = WordCompleter(
 )
 
 
-async def _async_save_session(
-    session_manager: SessionManager, session: Session
-) -> None:
+async def _async_save_session(session_manager: SessionManager, session: Session) -> None:
     """Save session asynchronously without blocking the REPL.
 
     Args:
@@ -148,10 +146,8 @@ async def repl_main(
             request = CompletionRequest(
                 prompt=user_input,  # Keep for backwards compatibility
                 model=model,
-                temperature=temperature
-                or app.config_manager.get("defaults.temperature", 0.7),
-                max_tokens=max_tokens
-                or app.config_manager.get("defaults.max_tokens", 2000),
+                temperature=temperature or app.config_manager.get("defaults.temperature", 0.7),
+                max_tokens=max_tokens or app.config_manager.get("defaults.max_tokens", 2000),
                 stream=True,
                 system_prompt=system_prompt,
                 messages=messages,  # Pass full conversation history
@@ -166,9 +162,7 @@ async def repl_main(
                 response_content,
                 tokens,
                 duration_ms,
-            ) = await app.completion_handler._handle_streaming(
-                provider_instance, request
-            )
+            ) = await app.completion_handler._handle_streaming(provider_instance, request)
 
             # Save turns to session
             user_turn = Turn(
@@ -209,9 +203,7 @@ async def repl_main(
         logger.error(f"Failed to save session on exit: {e}")
 
 
-async def handle_repl_command(
-    cmd: str, session: Session, sm: SessionManager, model: str
-) -> bool:
+async def handle_repl_command(cmd: str, session: Session, sm: SessionManager, model: str) -> bool:
     """Handle REPL commands.
 
     Args:
@@ -306,7 +298,5 @@ def show_history(session: Session, limit: int) -> None:
         role_color = "cyan" if turn.role == "user" else "green"
         label = "You" if turn.role == "user" else "Assistant"
         # Truncate for display
-        content = (
-            turn.content[:200] + "..." if len(turn.content) > 200 else turn.content
-        )
+        content = turn.content[:200] + "..." if len(turn.content) > 200 else turn.content
         console.print(f"[{role_color}]{label}:[/{role_color}] {content}\n")

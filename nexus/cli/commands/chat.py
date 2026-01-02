@@ -55,9 +55,7 @@ def chat_command(
     from nexus.core.app import NexusApp
 
     app = NexusApp()
-    final_system_prompt = resolve_system_prompt(
-        system, use, app.config_manager.config_dir
-    )
+    final_system_prompt = resolve_system_prompt(system, use, app.config_manager.config_dir)
 
     if files:
         process_files_and_stdin(files, "", allow_sensitive=allow_sensitive)

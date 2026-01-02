@@ -116,9 +116,7 @@ def handle_prompt(ctx, result, **kwargs):
         prompt = " ".join(args)
         cfg, prov, comp = init_components_fast()
 
-        final_prompt = process_files_and_stdin(
-            files, prompt, allow_sensitive=allow_sensitive
-        )
+        final_prompt = process_files_and_stdin(files, prompt, allow_sensitive=allow_sensitive)
 
         session_manager = None
         if session_name:
@@ -128,9 +126,7 @@ def handle_prompt(ctx, result, **kwargs):
             session_manager = SessionManager(sessions_dir)
             resolved_provider = provider or cfg.get_default_provider()
             resolved_model = model or cfg.get_default_model(resolved_provider)
-            session_manager.get_or_create_session(
-                session_name, resolved_model, resolved_provider
-            )
+            session_manager.get_or_create_session(session_name, resolved_model, resolved_provider)
 
         asyncio.run(
             comp.complete(
