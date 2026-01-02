@@ -77,8 +77,9 @@ version_toml = ["pyproject.toml:project.version"]
 major_on_zero = false
 build_command = "python -m pip install build && python -m build"
 commit_message = "chore(release): bump version to {version}"
-commit_parser = "angular"
+commit_parser = "conventional"
 tag_format = "v{version}"
+allow_zero_version = true
 
 [tool.ruff]
 line-length = 100
