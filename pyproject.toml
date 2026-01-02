@@ -80,6 +80,10 @@ commit_message = "chore(release): bump version to {version}"
 commit_parser = "conventional"
 tag_format = "v{version}"
 allow_zero_version = true
+version_source = "tag"
+assets = []
+remove_dist = false
+upload_to_vcs_release = true
 
 [tool.ruff]
 line-length = 100
