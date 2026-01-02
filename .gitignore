@@ -57,5 +57,8 @@ session_summary.md
 # Development artifacts
 archive/
 
+# Release notes drafts
+desc.md
+
 # Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
