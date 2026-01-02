@@ -2,6 +2,8 @@
 
 Ultra-minimal multi-provider AI CLI framework.
 
+**Available on PyPI as `nexus-ai-cli`**
+
 ## Features
 
 - **Unified Interface**: Single CLI for OpenAI, Anthropic, Ollama, and OpenRouter
@@ -12,9 +14,41 @@ Ultra-minimal multi-provider AI CLI framework.
 
 ## Installation
 
+### Quick Install (Recommended)
+
 ```bash
+pipx install nexus-ai-cli
+```
+
+**pipx** creates an isolated environment for Nexus AI, preventing conflicts with other Python packages.
+
+### Alternative Installation Methods
+
+**Using pip:**
+```bash
+pip install nexus-ai-cli
+```
+
+**Development install:**
+```bash
+git clone https://github.com/saadiqhorton/nexus-ai.git
+cd nexus-ai
 pip install -e .
 ```
+
+### Updating
+
+```bash
+pipx upgrade nexus-ai-cli
+# or
+pip install --upgrade nexus-ai-cli
+```
+
+### System Requirements
+
+- Python 3.8 or higher
+- API keys for at least one AI provider (OpenAI, Anthropic, or OpenRouter)
+- Ollama users: Ollama server running at http://localhost:11434
 
 ## Environment Setup
 
