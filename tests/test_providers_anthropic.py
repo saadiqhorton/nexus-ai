@@ -263,6 +263,42 @@ class TestAnthropicProviderComplete:
         assert call_args[1]["messages"] == [{"role": "user", "content": "User message"}]
 
     @pytest.mark.asyncio
+    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-api-key"})
+    @patch("nexus.providers.anthropic_provider.AsyncAnthropic")
+    async def test_complete_timeout(self, mock_anthropic, anthropic_config):
+        """Test timeout handling during completion."""
+        from anthropic import APITimeoutError
+
+        mock_client = AsyncMock()
+        mock_client.messages.create = AsyncMock(side_effect=APITimeoutError(Mock()))
+        mock_anthropic.return_value = mock_client
+
+        provider = AnthropicProvider(anthropic_config)
+        request = CompletionRequest(prompt="Test prompt", model="claude-sonnet-4")
+
+        with pytest.raises(APITimeoutError):
+            await provider.complete(request)
+
+    @pytest.mark.asyncio
+    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-api-key"})
+    @patch("nexus.providers.anthropic_provider.AsyncAnthropic")
+    async def test_complete_api_error(self, mock_anthropic, anthropic_config):
+        """Test general API error handling during completion."""
+        from anthropic import APIError
+
+        mock_client = AsyncMock()
+        mock_client.messages.create = AsyncMock(
+            side_effect=APIError("Internal Server Error", Mock(), body={})
+        )
+        mock_anthropic.return_value = mock_client
+
+        provider = AnthropicProvider(anthropic_config)
+        request = CompletionRequest(prompt="Test prompt", model="claude-sonnet-4")
+
+        with pytest.raises(APIError):
+            await provider.complete(request)
+
+    @pytest.mark.asyncio
     @patch.dict(os.environ, {}, clear=True)
     @patch("nexus.providers.anthropic_provider.AsyncAnthropic")
     async def test_complete_raises_without_client(self, mock_anthropic, anthropic_config):
@@ -356,6 +392,33 @@ class TestAnthropicProviderCompleteStream:
         # Verify system prompt was included in the call
         call_args = mock_client.messages.stream.call_args
         assert call_args[1]["system"] == "Be helpful"
+
+    @pytest.mark.asyncio
+    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-api-key"})
+    @patch("nexus.providers.anthropic_provider.AsyncAnthropic")
+    async def test_complete_stream_timeout(self, mock_anthropic, anthropic_config):
+        """Test timeout handling during streaming."""
+        from anthropic import APITimeoutError
+
+        mock_client = AsyncMock()
+
+        # Mock stream that raises timeout when accessed
+        class MockStreamTimeout:
+            async def __aenter__(self):
+                raise APITimeoutError(Mock())
+
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                pass
+
+        mock_client.messages.stream = AsyncMock(return_value=MockStreamTimeout())
+        mock_anthropic.return_value = mock_client
+
+        provider = AnthropicProvider(anthropic_config)
+        request = CompletionRequest(prompt="Test", model="claude-sonnet-4", stream=True)
+
+        with pytest.raises(APITimeoutError):
+            async for _ in provider.complete_stream(request):
+                pass
 
     @pytest.mark.asyncio
     @patch.dict(os.environ, {}, clear=True)

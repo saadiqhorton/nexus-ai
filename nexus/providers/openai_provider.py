@@ -1,11 +1,12 @@
 import os
 from typing import Any, AsyncIterator, Dict, List, cast
 
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, APIError, APITimeoutError, RateLimitError
 
 from nexus.utils.logging import get_logger
 
 from .base import BaseProvider, CompletionRequest, CompletionResponse, ModelInfo
+from nexus.utils.errors import ProviderError
 
 logger = get_logger(__name__)
 
@@ -53,9 +54,12 @@ class OpenAIProvider(BaseProvider):
                     )
 
             return sorted(model_list, key=lambda m: m.id)
-        except Exception as e:
-            logger.error(f"Error listing OpenAI models: {e}")
+        except (APIError, APITimeoutError, RateLimitError) as e:
+            logger.error(f"API error listing OpenAI models: {e}")
             return []
+        except Exception as e:
+            logger.exception(f"Unexpected error listing OpenAI models")
+            raise ProviderError(f"Failed to list models from OpenAI: {e}") from e
 
     async def complete(self, request: CompletionRequest) -> CompletionResponse:
         """Non-streaming completion"""

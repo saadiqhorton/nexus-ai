@@ -1,11 +1,12 @@
 import os
 from typing import Any, AsyncIterator, Dict, List, cast
 
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, APIError, APITimeoutError, RateLimitError
 
 from nexus.utils.logging import get_logger
 
 from .base import BaseProvider, CompletionRequest, CompletionResponse, ModelInfo
+from nexus.utils.errors import ProviderError
 
 logger = get_logger(__name__)
 
@@ -49,9 +50,12 @@ class OpenRouterProvider(BaseProvider):
                 )
 
             return sorted(model_list, key=lambda m: m.id)
-        except Exception as e:
-            logger.error(f"Error listing OpenRouter models: {e}")
+        except (APIError, APITimeoutError, RateLimitError) as e:
+            logger.error(f"API error listing OpenRouter models: {e}")
             return []
+        except Exception as e:
+            logger.exception(f"Unexpected error listing OpenRouter models")
+            raise ProviderError(f"Failed to list models from OpenRouter: {e}") from e
 
     async def complete(self, request: CompletionRequest) -> CompletionResponse:
         """Non-streaming completion"""
@@ -67,25 +71,32 @@ class OpenRouterProvider(BaseProvider):
                 messages.append({"role": "system", "content": request.system_prompt})
             messages.append({"role": "user", "content": request.prompt})
 
-        response = await self.client.chat.completions.create(
-            model=request.model,
-            messages=cast(Any, messages),
-            temperature=request.temperature,
-            max_tokens=request.max_tokens,
-            stream=False,
-        )
+        try:
+            response = await self.client.chat.completions.create(
+                model=request.model,
+                messages=cast(Any, messages),
+                temperature=request.temperature,
+                max_tokens=request.max_tokens,
+                stream=False,
+            )
 
-        return CompletionResponse(
-            content=response.choices[0].message.content or "",
-            model=response.model,
-            provider="openrouter",
-            usage={
-                "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
-                "completion_tokens": response.usage.completion_tokens if response.usage else 0,
-                "total_tokens": response.usage.total_tokens if response.usage else 0,
-            },
-            finish_reason=response.choices[0].finish_reason or "stop",
-        )
+            return CompletionResponse(
+                content=response.choices[0].message.content or "",
+                model=response.model,
+                provider="openrouter",
+                usage={
+                    "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
+                    "completion_tokens": response.usage.completion_tokens if response.usage else 0,
+                    "total_tokens": response.usage.total_tokens if response.usage else 0,
+                },
+                finish_reason=response.choices[0].finish_reason or "stop",
+            )
+        except (APIError, APITimeoutError, RateLimitError) as e:
+            logger.error(f"OpenRouter API error: {e}")
+            raise
+        except Exception as e:
+            logger.exception("Unexpected error in OpenRouter completion")
+            raise ProviderError(f"OpenRouter completion failed: {e}") from e
 
     async def complete_stream(self, request: CompletionRequest) -> AsyncIterator[str]:
         """Streaming completion"""
@@ -101,17 +112,24 @@ class OpenRouterProvider(BaseProvider):
                 messages.append({"role": "system", "content": request.system_prompt})
             messages.append({"role": "user", "content": request.prompt})
 
-        stream = await self.client.chat.completions.create(
-            model=request.model,
-            messages=cast(Any, messages),
-            temperature=request.temperature,
-            max_tokens=request.max_tokens,
-            stream=True,
-        )
+        try:
+            stream = await self.client.chat.completions.create(
+                model=request.model,
+                messages=cast(Any, messages),
+                temperature=request.temperature,
+                max_tokens=request.max_tokens,
+                stream=True,
+            )
 
-        async for chunk in stream:
-            if chunk.choices and chunk.choices[0].delta.content:
-                yield chunk.choices[0].delta.content
+            async for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+        except (APIError, APITimeoutError, RateLimitError) as e:
+            logger.error(f"OpenRouter streaming error: {e}")
+            raise
+        except Exception as e:
+            logger.exception("Unexpected error in OpenRouter streaming")
+            raise ProviderError(f"OpenRouter streaming failed: {e}") from e
 
     @staticmethod
     def _get_context_window(model_id: str) -> int:

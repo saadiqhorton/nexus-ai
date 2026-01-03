@@ -163,8 +163,9 @@ class TestOpenAIProviderListModels:
     @patch("nexus.providers.openai_provider.AsyncOpenAI")
     async def test_list_models_handles_api_error(self, mock_openai, openai_config):
         """Test list_models handles API errors gracefully."""
+        from openai import APIError
         mock_client = AsyncMock()
-        mock_client.models.list = AsyncMock(side_effect=Exception("API error"))
+        mock_client.models.list = AsyncMock(side_effect=APIError("API error", Mock(), body={}))
         mock_openai.return_value = mock_client
 
         provider = OpenAIProvider(openai_config)
@@ -451,3 +452,147 @@ class TestOpenAIProviderContextWindow:
         """Test context window for unknown models defaults to 4096."""
         assert OpenAIProvider._get_context_window("unknown-model") == 4096
         assert OpenAIProvider._get_context_window("gpt-5") == 4096
+
+
+class TestOpenAIProviderErrorHandling:
+    """Tests for OpenAI provider error handling with specific exception types."""
+
+    @pytest.mark.asyncio
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-api-key"})
+    @patch("nexus.providers.openai_provider.AsyncOpenAI")
+    async def test_complete_timeout(self, mock_openai, openai_config):
+        """Test timeout handling during completion."""
+        from openai import APITimeoutError
+
+        mock_client = AsyncMock()
+        mock_client.chat.completions.create = AsyncMock(
+            side_effect=APITimeoutError(Mock())
+        )
+        mock_openai.return_value = mock_client
+
+        provider = OpenAIProvider(openai_config)
+        request = CompletionRequest(prompt="test", model="gpt-4")
+
+        with pytest.raises(APITimeoutError):
+            await provider.complete(request)
+
+    @pytest.mark.asyncio
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-api-key"})
+    @patch("nexus.providers.openai_provider.AsyncOpenAI")
+    async def test_complete_rate_limit(self, mock_openai, openai_config):
+        """Test rate limit handling during completion."""
+        from openai import RateLimitError
+
+        mock_client = AsyncMock()
+        mock_client.chat.completions.create = AsyncMock(
+            side_effect=RateLimitError("Rate limit exceeded", response=Mock(), body={})
+        )
+        mock_openai.return_value = mock_client
+
+        provider = OpenAIProvider(openai_config)
+        request = CompletionRequest(prompt="test", model="gpt-4")
+
+        with pytest.raises(RateLimitError):
+            await provider.complete(request)
+
+    @pytest.mark.asyncio
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-api-key"})
+    @patch("nexus.providers.openai_provider.AsyncOpenAI")
+    async def test_list_models_timeout(self, mock_openai, openai_config):
+        """Test timeout handling when listing models returns empty list."""
+        from openai import APITimeoutError
+
+        mock_client = AsyncMock()
+        mock_client.models.list = AsyncMock(
+            side_effect=APITimeoutError(Mock())
+        )
+        mock_openai.return_value = mock_client
+
+        provider = OpenAIProvider(openai_config)
+        models = await provider.list_models()
+
+        assert models == []  # Should return empty list on known API errors
+
+    @pytest.mark.asyncio
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-api-key"})
+    @patch("nexus.providers.openai_provider.AsyncOpenAI")
+    async def test_list_models_rate_limit(self, mock_openai, openai_config):
+        """Test rate limit handling when listing models."""
+        from openai import RateLimitError
+
+        mock_client = AsyncMock()
+        mock_client.models.list = AsyncMock(
+            side_effect=RateLimitError("Rate limit exceeded", response=Mock(), body={})
+        )
+        mock_openai.return_value = mock_client
+
+        provider = OpenAIProvider(openai_config)
+        models = await provider.list_models()
+
+        assert models == []  # Should return empty list gracefully
+
+    @pytest.mark.asyncio
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-api-key"})
+    @patch("nexus.providers.openai_provider.AsyncOpenAI")
+    async def test_list_models_api_error(self, mock_openai, openai_config):
+        """Test generic API error handling when listing models."""
+        from openai import APIError
+
+        mock_client = AsyncMock()
+        mock_client.models.list = AsyncMock(
+            side_effect=APIError("API connection failed", Mock(), body={})
+        )
+        mock_openai.return_value = mock_client
+
+        provider = OpenAIProvider(openai_config)
+        models = await provider.list_models()
+
+        assert models == []  # Should return empty list on API errors
+
+    @pytest.mark.asyncio
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-api-key"})
+    @patch("nexus.providers.openai_provider.AsyncOpenAI")
+    async def test_list_models_unexpected_error_raises(self, mock_openai, openai_config):
+        """Test that unexpected errors are raised as ProviderError."""
+        from nexus.utils.errors import ProviderError
+
+        mock_client = AsyncMock()
+        mock_client.models.list = AsyncMock(
+            side_effect=ValueError("Unexpected error")
+        )
+        mock_openai.return_value = mock_client
+
+        provider = OpenAIProvider(openai_config)
+
+        with pytest.raises(ProviderError):
+            await provider.list_models()
+
+    @pytest.mark.asyncio
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-api-key"})
+    @patch("nexus.providers.openai_provider.AsyncOpenAI")
+    async def test_complete_stream_timeout(self, mock_openai, openai_config):
+        """Test timeout handling during streaming."""
+        from openai import APITimeoutError
+
+        async def mock_stream_with_timeout():
+            yield Mock(choices=[Mock(delta=Mock(content="Hello"))])
+            raise APITimeoutError(Mock())
+
+        mock_client = AsyncMock()
+        mock_client.chat.completions.create = AsyncMock(
+            return_value=mock_stream_with_timeout()
+        )
+        mock_openai.return_value = mock_client
+
+        provider = OpenAIProvider(openai_config)
+        request = CompletionRequest(prompt="test", model="gpt-4", stream=True)
+
+        chunks = []
+        with pytest.raises(APITimeoutError):
+            async for chunk in provider.complete_stream(request):
+                chunks.append(chunk)
+
+        # Should have received at least one chunk before timeout
+        assert len(chunks) == 1
+        assert chunks[0] == "Hello"
+

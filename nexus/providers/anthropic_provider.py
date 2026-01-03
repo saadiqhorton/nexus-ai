@@ -2,9 +2,10 @@ import inspect
 import os
 from typing import AsyncIterator, Dict, List
 
-from anthropic import AsyncAnthropic
+from anthropic import AsyncAnthropic, APIError, APITimeoutError, RateLimitError
 
 from nexus.utils.logging import get_logger
+from nexus.utils.errors import ProviderError
 
 from .base import BaseProvider, CompletionRequest, CompletionResponse, ModelInfo
 
@@ -127,25 +128,32 @@ class AnthropicProvider(BaseProvider):
             messages = [{"role": "user", "content": request.prompt}]
             system_msg = request.system_prompt or ""
 
-        response = await self.client.messages.create(
-            model=request.model,
-            max_tokens=request.max_tokens,
-            temperature=request.temperature,
-            system=system_msg,
-            messages=messages,  # type: ignore[arg-type]
-        )
+        try:
+            response = await self.client.messages.create(
+                model=request.model,
+                max_tokens=request.max_tokens,
+                temperature=request.temperature,
+                system=system_msg,
+                messages=messages,  # type: ignore[arg-type]
+            )
 
-        return CompletionResponse(
-            content=response.content[0].text if response.content else "",
-            model=response.model,
-            provider="anthropic",
-            usage={
-                "prompt_tokens": response.usage.input_tokens,
-                "completion_tokens": response.usage.output_tokens,
-                "total_tokens": response.usage.input_tokens + response.usage.output_tokens,
-            },
-            finish_reason=response.stop_reason or "unknown",
-        )
+            return CompletionResponse(
+                content=response.content[0].text if response.content else "",
+                model=response.model,
+                provider="anthropic",
+                usage={
+                    "prompt_tokens": response.usage.input_tokens,
+                    "completion_tokens": response.usage.output_tokens,
+                    "total_tokens": response.usage.input_tokens + response.usage.output_tokens,
+                },
+                finish_reason=response.stop_reason or "unknown",
+            )
+        except (APIError, APITimeoutError, RateLimitError) as e:
+            logger.error(f"Anthropic API error: {e}")
+            raise
+        except Exception as e:
+            logger.exception("Unexpected error in Anthropic completion")
+            raise ProviderError(f"Anthropic completion failed: {e}") from e
 
     async def complete_stream(self, request: CompletionRequest) -> AsyncIterator[str]:
         """Streaming completion"""
@@ -164,16 +172,23 @@ class AnthropicProvider(BaseProvider):
             messages = [{"role": "user", "content": request.prompt}]
             system_msg = request.system_prompt or ""
 
-        stream = self.client.messages.stream(
-            model=request.model,
-            max_tokens=request.max_tokens,
-            temperature=request.temperature,
-            system=system_msg,
-            messages=messages,  # type: ignore[arg-type]
-        )
-        if inspect.isawaitable(stream):
-            stream = await stream
+        try:
+            stream = self.client.messages.stream(
+                model=request.model,
+                max_tokens=request.max_tokens,
+                temperature=request.temperature,
+                system=system_msg,
+                messages=messages,  # type: ignore[arg-type]
+            )
+            if inspect.isawaitable(stream):
+                stream = await stream
 
-        async with stream as stream_ctx:
-            async for text in stream_ctx.text_stream:
-                yield text
+            async with stream as stream_ctx:
+                async for text in stream_ctx.text_stream:
+                    yield text
+        except (APIError, APITimeoutError, RateLimitError) as e:
+            logger.error(f"Anthropic streaming error: {e}")
+            raise
+        except Exception as e:
+            logger.exception("Unexpected error in Anthropic streaming")
+            raise ProviderError(f"Anthropic streaming failed: {e}") from e

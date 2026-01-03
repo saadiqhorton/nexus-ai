@@ -145,8 +145,25 @@ class TestOpenRouterProviderListModels:
     @patch("nexus.providers.openrouter_provider.AsyncOpenAI")
     async def test_list_models_handles_api_error(self, mock_openai, openrouter_config):
         """Test list_models handles API errors gracefully."""
+        from openai import APIError
         mock_client = AsyncMock()
-        mock_client.models.list = AsyncMock(side_effect=Exception("API error"))
+        mock_client.models.list = AsyncMock(side_effect=APIError("API error", Mock(), body={}))
+        mock_openai.return_value = mock_client
+
+        provider = OpenRouterProvider(openrouter_config)
+        models = await provider.list_models()
+
+        assert models == []
+
+    @pytest.mark.asyncio
+    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-api-key"})
+    @patch("nexus.providers.openrouter_provider.AsyncOpenAI")
+    async def test_list_models_timeout(self, mock_openai, openrouter_config):
+        """Test list_models handles timeouts gracefully."""
+        from openai import APITimeoutError
+
+        mock_client = AsyncMock()
+        mock_client.models.list = AsyncMock(side_effect=APITimeoutError(Mock()))
         mock_openai.return_value = mock_client
 
         provider = OpenRouterProvider(openrouter_config)
@@ -290,6 +307,44 @@ class TestOpenRouterProviderComplete:
         assert call_args[1]["messages"] == messages
 
     @pytest.mark.asyncio
+    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-api-key"})
+    @patch("nexus.providers.openrouter_provider.AsyncOpenAI")
+    async def test_complete_timeout(self, mock_openai, openrouter_config):
+        """Test timeout handling during completion."""
+        from openai import APITimeoutError
+
+        mock_client = AsyncMock()
+        mock_client.chat.completions.create = AsyncMock(
+            side_effect=APITimeoutError(Mock())
+        )
+        mock_openai.return_value = mock_client
+
+        provider = OpenRouterProvider(openrouter_config)
+        request = CompletionRequest(prompt="Test prompt", model="openai/gpt-4")
+
+        with pytest.raises(APITimeoutError):
+            await provider.complete(request)
+
+    @pytest.mark.asyncio
+    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-api-key"})
+    @patch("nexus.providers.openrouter_provider.AsyncOpenAI")
+    async def test_complete_api_error(self, mock_openai, openrouter_config):
+        """Test API error handling during completion."""
+        from openai import APIError
+
+        mock_client = AsyncMock()
+        mock_client.chat.completions.create = AsyncMock(
+            side_effect=APIError("OpenRouter internal error", Mock(), body={})
+        )
+        mock_openai.return_value = mock_client
+
+        provider = OpenRouterProvider(openrouter_config)
+        request = CompletionRequest(prompt="Test prompt", model="openai/gpt-4")
+
+        with pytest.raises(APIError):
+            await provider.complete(request)
+
+    @pytest.mark.asyncio
     @patch.dict(os.environ, {}, clear=True)
     @patch("nexus.providers.openrouter_provider.AsyncOpenAI")
     async def test_complete_raises_without_client(self, mock_openai, openrouter_config):
@@ -370,6 +425,26 @@ class TestOpenRouterProviderCompleteStream:
             chunks.append(chunk)
 
         assert chunks == ["Hello"]
+
+    @pytest.mark.asyncio
+    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-api-key"})
+    @patch("nexus.providers.openrouter_provider.AsyncOpenAI")
+    async def test_complete_stream_timeout(self, mock_openai, openrouter_config):
+        """Test timeout handling during streaming."""
+        from openai import APITimeoutError
+
+        mock_client = AsyncMock()
+        mock_client.chat.completions.create = AsyncMock(
+            side_effect=APITimeoutError(Mock())
+        )
+        mock_openai.return_value = mock_client
+
+        provider = OpenRouterProvider(openrouter_config)
+        request = CompletionRequest(prompt="Test", model="openai/gpt-4", stream=True)
+
+        with pytest.raises(APITimeoutError):
+            async for _ in provider.complete_stream(request):
+                pass
 
     @pytest.mark.asyncio
     @patch.dict(os.environ, {}, clear=True)
