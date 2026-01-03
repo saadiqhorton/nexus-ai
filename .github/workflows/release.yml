@@ -30,10 +30,10 @@ jobs:
 
       - name: Semantic Release (version)
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.NEXUS_RELEASE_TOKEN }}
         run: semantic-release -vv version
 
       - name: Semantic Release (publish)
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.NEXUS_RELEASE_TOKEN }}
         run: semantic-release -vv publish
