@@ -7,6 +7,9 @@ from nexus.prompts.manager import PromptManager
 from nexus.utils.errors import FileAccessError
 from nexus.utils.path_security import validate_file_path
 
+# Maximum input size from stdin (10MB)
+MAX_INPUT_SIZE = 10 * 1024 * 1024
+
 
 def is_binary_file(filepath: str) -> bool:
     """Check if a file is binary by attempting to read it as text"""
@@ -109,7 +112,13 @@ def process_files_and_stdin(files: tuple, prompt: str, allow_sensitive: bool = F
                             raise FileAccessError(str(e)) from e
 
     if not sys.stdin.isatty():
-        stdin_content = sys.stdin.read()
+        # Read with size limit to prevent OOM attacks
+        stdin_content = sys.stdin.read(MAX_INPUT_SIZE + 1)
+        if len(stdin_content) > MAX_INPUT_SIZE:
+            raise ValueError(
+                f"Input exceeds maximum size of {MAX_INPUT_SIZE // (1024*1024)}MB. "
+                f"Use --file for large inputs."
+            )
         if stdin_content.strip():
             parts.append(stdin_content)
 

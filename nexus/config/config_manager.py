@@ -1,3 +1,6 @@
+import os
+import shutil
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -119,7 +122,19 @@ class ConfigManager:
         return self.config.defaults.model
 
     def save(self):
-        """Save current configuration to file"""
-        with open(self.config_path, "w") as f:
-            yaml.dump(self.config.model_dump(), f, default_flow_style=False)
-        logger.info(f"Config saved to {self.config_path}")
+        """Save current configuration to file using atomic write"""
+        # Write to temp file first to prevent corruption on crash
+        fd, temp_path = tempfile.mkstemp(
+            dir=self.config_path.parent, prefix=".config_", suffix=".yaml"
+        )
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                yaml.dump(self.config.model_dump(), f, default_flow_style=False)
+            # Atomic rename
+            shutil.move(temp_path, self.config_path)
+            logger.info(f"Config saved to {self.config_path}")
+        except Exception:
+            # Clean up temp file on error
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            raise
