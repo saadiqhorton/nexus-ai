@@ -61,7 +61,7 @@ def handle_exception(e: Exception, debug_mode: bool = False) -> None:
             Panel(
                 f"[red]Unexpected Error[/red]: {str(e)}\n\n"
                 f"[dim]This is a bug. Please report it at:[/dim]\n"
-                f"[cyan]https://github.com/saadiqhorton/nexus-ai/issues/new[/cyan]",
+                f"[cyan]https://github.com/sst/nexus/issues/new[/cyan]",
                 title="[bold]Nexus Error[/bold]",
                 border_style="red",
             )
