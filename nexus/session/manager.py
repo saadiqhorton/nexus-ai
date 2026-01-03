@@ -6,8 +6,11 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
 
+import aiofiles
+from nexus.session.models import SearchResult, Session, Turn
 from nexus.session.models import SearchResult, Session, Turn
 from nexus.utils.logging import get_logger
+from nexus.utils.crypto import EncryptionManager
 
 logger = get_logger(__name__)
 
@@ -25,6 +28,13 @@ class SessionManager:
         self.sessions_dir.mkdir(parents=True, exist_ok=True)
         logger.debug(f"SessionManager initialized with dir: {self.sessions_dir}")
 
+        # Initialize encryption
+        self.crypto = EncryptionManager()
+        if self.crypto.initialize():
+            logger.info("Session encryption enabled")
+        else:
+            logger.debug("Session encryption unavailable")
+
         # Auto-cleanup temp sessions on init
         self.cleanup_temp_sessions()
 
@@ -41,8 +51,8 @@ class SessionManager:
             sanitized = sanitized.replace(char, "_")
         return sanitized.strip()
 
-    def get_or_create_session(self, name: str, model: str, provider: str) -> Session:
-        """Get existing session or create a new one.
+    async def get_or_create_session(self, name: str, model: str, provider: str) -> Session:
+        """Get existing session or create a new one asynchronously.
 
         Args:
             name: Session name.
@@ -52,13 +62,13 @@ class SessionManager:
         Returns:
             Session object.
         """
-        session = self.load_session(name)
+        session = await self.load_session(name)
         if session is not None:
             return session
-        return self.create_session(name, model, provider)
+        return await self.create_session(name, model, provider)
 
-    def create_session(self, name: str, model: str, provider: str) -> Session:
-        """Create a new session.
+    async def create_session(self, name: str, model: str, provider: str) -> Session:
+        """Create a new session asynchronously.
 
         Args:
             name: Session name.
@@ -74,12 +84,12 @@ class SessionManager:
             model=model,
             provider=provider,
         )
-        self.save_session(session)
+        await self.save_session(session)
         logger.info(f"Created new session: {sanitized_name}")
         return session
 
-    def load_session(self, name: str) -> Optional[Session]:
-        """Load a session from disk.
+    async def load_session(self, name: str) -> Optional[Session]:
+        """Load a session from disk asynchronously.
 
         Args:
             name: Session name.
@@ -94,20 +104,33 @@ class SessionManager:
             return None
 
         try:
-            with open(session_path, encoding="utf-8") as f:
-                data = f.read()
-            session = Session.model_validate_json(data)
-            logger.debug(f"Loaded session: {sanitized_name}")
-            return session
-        except json.JSONDecodeError as e:
-            logger.warning(f"Corrupted session file {session_path}: {e}")
-            return None
+            async with aiofiles.open(session_path, encoding="utf-8") as f:
+                data = await f.read()
+            
+            # Try to parse as plaintext JSON first
+            try:
+                session = Session.model_validate_json(data)
+                return session
+            except json.JSONDecodeError:
+                # If not JSON, try to decrypt
+                if self.crypto.is_available:
+                    try:
+                        decrypted_data = self.crypto.decrypt(data)
+                        session = Session.model_validate_json(decrypted_data)
+                        return session
+                    except Exception as e:
+                        # Failed to decrypt, likely truly corrupted or wrong key
+                        logger.warning(f"Failed to decrypt/parse session {sanitized_name}: {e}")
+                        return None
+                else:
+                    return None
+                    
         except Exception as e:
             logger.warning(f"Failed to load session {sanitized_name}: {e}")
             return None
 
-    def save_session(self, session: Session) -> None:
-        """Save a session to disk with atomic write.
+    async def save_session(self, session: Session) -> None:
+        """Save a session to disk with atomic write asynchronously.
 
         Args:
             session: Session object to save.
@@ -117,13 +140,22 @@ class SessionManager:
         tmp_path = session_path.with_suffix(".tmp")
 
         try:
-            # Write to temp file first
-            with open(tmp_path, "w", encoding="utf-8") as f:
-                f.write(session.model_dump_json(indent=2))
+            # Serialize session
+            json_data = session.model_dump_json(indent=2)
+            
+            # Encrypt if available
+            if self.crypto.is_available:
+                data_to_write = self.crypto.encrypt(json_data)
+            else:
+                data_to_write = json_data
 
-            # Atomic rename
+            # Write to temp file first (async)
+            async with aiofiles.open(tmp_path, "w", encoding="utf-8") as f:
+                await f.write(data_to_write)
+
+            # Atomic rename (synchronous, but fast)
             tmp_path.replace(session_path)
-            logger.debug(f"Saved session: {session.name}")
+            logger.debug(f"Saved session: {session.name} (Encrypted: {self.crypto.is_available})")
         except Exception as e:
             logger.error(f"Failed to save session {session.name}: {e}")
             # Clean up temp file if it exists
@@ -131,7 +163,7 @@ class SessionManager:
                 tmp_path.unlink()
             raise
 
-    def add_turn(self, session: Session, turn: Turn, save: bool = False) -> None:
+    async def add_turn(self, session: Session, turn: Turn, save: bool = False) -> None:
         """Add a turn to a session.
 
         Args:
@@ -142,22 +174,26 @@ class SessionManager:
         session.turns.append(turn)
         session.total_tokens += turn.tokens.get("total", 0)
         if save:
-            self.save_session(session)
+            await self.save_session(session)
         logger.debug(f"Added turn to session {session.name}")
 
-    def list_sessions(self) -> List[Session]:
-        """List all sessions.
+    async def list_sessions(self) -> List[Session]:
+        """List all sessions asynchronously.
 
         Returns:
             List of Session objects (excluding temp sessions).
         """
         sessions = []
-        for path in self.sessions_dir.glob("*.json"):
-            # Skip temp sessions
-            if path.stem.startswith(".temp-"):
-                continue
-
-            session = self.load_session(path.stem)
+        # Gather all paths first
+        paths = [
+            p for p in self.sessions_dir.glob("*.json") 
+            if not p.stem.startswith(".temp-")
+        ]
+        
+        # Load sequentially for now to avoid opening too many files, 
+        # but awaited so it doesn't block event loop
+        for path in paths:
+            session = await self.load_session(path.stem)
             if session is not None:
                 sessions.append(session)
 
@@ -189,7 +225,7 @@ class SessionManager:
             logger.error(f"Failed to delete session {sanitized_name}: {e}")
             return False
 
-    def rename_session(self, old_name: str, new_name: str) -> bool:
+    async def rename_session(self, old_name: str, new_name: str) -> bool:
         """Rename a session.
 
         Args:
@@ -214,12 +250,12 @@ class SessionManager:
             return False
 
         try:
-            session = self.load_session(old_sanitized)
+            session = await self.load_session(old_sanitized)
             if session is None:
                 return False
 
             session.name = new_sanitized
-            self.save_session(session)
+            await self.save_session(session)
             old_path.unlink()
             logger.info(f"Renamed session: {old_sanitized} -> {new_sanitized}")
             return True
@@ -227,8 +263,8 @@ class SessionManager:
             logger.error(f"Failed to rename session: {e}")
             return False
 
-    def search_sessions(self, query: str) -> List[SearchResult]:
-        """Search sessions by name or content.
+    async def search_sessions(self, query: str) -> List[SearchResult]:
+        """Search sessions by name or content asynchronously.
 
         Args:
             query: Search query string.
@@ -239,12 +275,14 @@ class SessionManager:
         results = []
         query_lower = query.lower()
 
-        for path in self.sessions_dir.glob("*.json"):
-            # Skip temp sessions
-            if path.stem.startswith(".temp-"):
-                continue
+        # Get all paths
+        paths = [
+            p for p in self.sessions_dir.glob("*.json") 
+            if not p.stem.startswith(".temp-")
+        ]
 
-            session = self.load_session(path.stem)
+        for path in paths:
+            session = await self.load_session(path.stem)
             if session is None:
                 continue
 
@@ -279,8 +317,8 @@ class SessionManager:
         results.sort(key=lambda r: r.updated_at, reverse=True)
         return results
 
-    def get_temp_session(self, model: str, provider: str) -> Session:
-        """Create a temporary session.
+    async def get_temp_session(self, model: str, provider: str) -> Session:
+        """Create a temporary session asynchronously.
 
         Args:
             model: Model identifier.
@@ -291,7 +329,7 @@ class SessionManager:
         """
         timestamp = int(time.time() * 1000)
         temp_name = f".temp-{timestamp}"
-        return self.create_session(temp_name, model, provider)
+        return await self.create_session(temp_name, model, provider)
 
     def cleanup_temp_sessions(self, max_age_hours: int = 24) -> None:
         """Clean up old temporary sessions.
@@ -316,8 +354,8 @@ class SessionManager:
         if cleaned_count > 0:
             logger.info(f"Cleaned up {cleaned_count} temp session(s)")
 
-    def export_session(self, name: str, format: str) -> str:
-        """Export a session to a string format.
+    async def export_session(self, name: str, format: str) -> str:
+        """Export a session to a string format asynchronously.
 
         Args:
             name: Session name to export.
@@ -329,7 +367,7 @@ class SessionManager:
         Raises:
             ValueError: If session not found or invalid format.
         """
-        session = self.load_session(name)
+        session = await self.load_session(name)
         if session is None:
             raise ValueError(f"Session not found: {name}")
 

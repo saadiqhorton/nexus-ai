@@ -44,9 +44,8 @@ async def _async_save_session(session_manager: SessionManager, session: Session)
         session: Session to save.
     """
     try:
-        # Run the synchronous save_session in a thread pool to avoid blocking
-        loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, session_manager.save_session, session)
+        # Direct async save
+        await session_manager.save_session(session)
         logger.debug(f"Async saved session: {session.name}")
     except Exception as e:
         logger.error(f"Failed to async save session: {e}")
@@ -80,13 +79,13 @@ async def repl_main(
 
     # Get or create session (temp if no name provided)
     if session_name:
-        session = session_manager.get_or_create_session(
+        session = await session_manager.get_or_create_session(
             session_name,
             model or app.config_manager.get_default_model(),
             provider or app.config_manager.get_default_provider(),
         )
     else:
-        session = session_manager.get_temp_session(
+        session = await session_manager.get_temp_session(
             model or app.config_manager.get_default_model(),
             provider or app.config_manager.get_default_provider(),
         )
@@ -195,9 +194,9 @@ async def repl_main(
             logger.exception(f"REPL error: {e}")
             console.print(f"[red]Error: {e}[/red]")
 
-    # Final save on exit (synchronous to ensure it completes)
+    # Final save on exit
     try:
-        session_manager.save_session(session)
+        await session_manager.save_session(session)
         logger.debug("Final session save on exit")
     except Exception as e:
         logger.error(f"Failed to save session on exit: {e}")
@@ -235,7 +234,7 @@ async def handle_repl_command(cmd: str, session: Session, sm: SessionManager, mo
         if args:
             old_name = session.name
             session.name = args
-            sm.save_session(session)
+            await sm.save_session(session)
             # Delete old temp file if it was temp
             if old_name.startswith(".temp-"):
                 sm.delete_session(old_name)
@@ -257,7 +256,7 @@ async def handle_repl_command(cmd: str, session: Session, sm: SessionManager, mo
     elif command == "/export":
         export_format = args if args in ("json", "markdown") else "markdown"
         try:
-            content = sm.export_session(session.name, export_format)
+            content = await sm.export_session(session.name, export_format)
             print(content)
         except ValueError as e:
             console.print(f"[red]Error: {e}[/red]")

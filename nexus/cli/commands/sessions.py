@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 
 import click
@@ -38,7 +39,7 @@ def sessions_list(recent: int):
     sessions_dir = Path(cfg.config.sessions.storage_path)
     sm = SessionManager(sessions_dir)
 
-    sessions = sm.list_sessions()
+    sessions = asyncio.run(sm.list_sessions())
 
     if not sessions:
         console.print("[yellow]No sessions found[/yellow]")
@@ -82,7 +83,7 @@ def sessions_show(name: str, fmt: str):
 
     sessions_dir = Path(cfg.config.sessions.storage_path)
     sm = SessionManager(sessions_dir)
-    session = sm.load_session(name)
+    session = asyncio.run(sm.load_session(name))
 
     if not session:
         console.print(f"[red]Session '{name}' not found[/red]")
@@ -130,7 +131,7 @@ def sessions_export(name: str, fmt: str, output: str):
     sm = SessionManager(sessions_dir)
 
     try:
-        content = sm.export_session(name, fmt)
+        content = asyncio.run(sm.export_session(name, fmt))
     except ValueError as e:
         console.print(f"[red]{e}[/red]")
         return
@@ -172,7 +173,7 @@ def sessions_search(query: str, limit: int):
     sessions_dir = Path(cfg.config.sessions.storage_path)
     sm = SessionManager(sessions_dir)
 
-    results = sm.search_sessions(query)
+    results = asyncio.run(sm.search_sessions(query))
 
     if not results:
         console.print("[yellow]No matches found[/yellow]")
@@ -199,7 +200,7 @@ def sessions_rename(old_name: str, new_name: str):
     sessions_dir = Path(cfg.config.sessions.storage_path)
     sm = SessionManager(sessions_dir)
 
-    if sm.rename_session(old_name, new_name):
+    if asyncio.run(sm.rename_session(old_name, new_name)):
         console.print(f"[green]✓[/green] Renamed '{old_name}' to '{new_name}'")
     else:
         console.print(f"[red]Failed: '{old_name}' not found or '{new_name}' already exists[/red]")

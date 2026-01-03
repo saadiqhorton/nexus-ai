@@ -39,9 +39,12 @@ dependencies = [
     "python-dotenv>=1.0,<2.0",
     "pydantic>=2.0,<3.0",
 
-    # HTTP & Retry - stable utilities
-    "requests>=2.31,<3.0",
-    "tenacity>=8.2,<9.0",
+    # Async I/O for session management
+    "aiofiles>=23.0,<24.0",
+
+    # Security & Encryption
+    "cryptography>=41.0.0",
+    "keyring>=24.0.0",
 ]
 
 [project.optional-dependencies]
@@ -52,6 +55,7 @@ dev = [
     "hypothesis>=6.0",
     "responses>=0.24",
     "ruff>=0.1.0",
+    "requests>=2.31,<3.0",  # Used only in tests
 ]
 
 [project.scripts]
